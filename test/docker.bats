@@ -8,7 +8,7 @@ function setup {
 }
 
 function teardown {
-	docker ps -aq | xargs -r docker rm -f &>/dev/null
+	docker ps -aq | xargs -r docker rm -fv &>/dev/null
 }
 
 
@@ -74,7 +74,7 @@ function teardown {
 		-v /etc/nginx/certs/ \
 		nginx:latest
 	assert_success
-	run retry 5 1s curl --silent --fail --head http://$(docker_ip bats-nginx)/
+	run retry 5 1s curl --silent --fail -A "before-docker-gen" --head http://$(docker_ip bats-nginx)/
 	assert_output -l 0 $'HTTP/1.1 200 OK\r'
 
 	# GIVEN docker-gen running on our docker host
@@ -99,11 +99,13 @@ function teardown {
 	sleep 2s
 
 	# THEN querying nginx without Host header → 503
-	run curl --silent --head http://$(docker_ip bats-nginx)/
+	run curl --silent --head -A "after-docker-gen" http://$(docker_ip bats-nginx)/
 	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r' || sh -c "
 		docker logs bats-nginx
 		echo ----------------------
 		docker logs bats-docker-gen
+		echo ----------------------
+		curl --silent http://$(docker_ip bats-nginx)/data
 		false
 	"
 
