@@ -48,6 +48,7 @@ function teardown {
 	# GIVEN a container exposing our docker host over TCP
 	run docker_tcp bats-docker-tcp
 	assert_success
+	sleep 1s
 
 	# GIVEN nginx-proxy running on our docker host using tcp to connect to our docker host
 	run nginxproxy -e DOCKER_HOST="tcp://bats-docker-tcp:2375" --link bats-docker-tcp:bats-docker-tcp
