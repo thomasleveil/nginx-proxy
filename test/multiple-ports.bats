@@ -16,69 +16,72 @@ function teardown {
 
 @test "[$TEST_FILE] nginx-proxy default to the service running on port 80" {
 	# GIVEN a container exposing 2 webservers on ports 80 and 1234
-	docker_clean bats-multiple-ports-1
 	run docker run -d \
-		--name bats-multiple-ports-1 \
-		-e VIRTUAL_HOST=multiple-ports-1.bats \
-		--expose 1234 \
+		--name bats-web \
+		-e VIRTUAL_HOST=web.bats \
 		--expose 80 \
-		-v $BATS_TEST_DIRNAME/fixtures/multiple-ports/1.txt:/data80/data \
-		-v $BATS_TEST_DIRNAME/fixtures/multiple-ports/2.txt/:/data1234/data \
-		python:3 \
-			sh -c "(cd /data80/; python -m http.server 80 &); cd /data1234/; python -m http.server 1234"
+		--expose 90 \
+		-w /var/www/ \
+		python:3 sh -c "
+			(mkdir /var/www/80; cd /var/www/80; echo 'f00' > data; python -m http.server 80 & )
+		     mkdir /var/www/90; cd /var/www/90; echo 'bar' > data; python -m http.server 90
+	    "
 	assert_success
-	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-multiple-ports-1):80/data
-	assert_output multiple-ports-1
-	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-multiple-ports-1):1234/data
-	assert_output multiple-ports-2
+
+	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-web):80/data
+	assert_output f00
+
+	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-web):90/data
+	assert_output bar
 
 	# THEN
-	run nginxproxy_curl /data --header "Host: multiple-ports-1.bats"
-	assert_output multiple-ports-1
+	run nginxproxy_curl /data --header "Host: web.bats"
+	assert_output f00
 }
 
 
-@test "[$TEST_FILE] VIRTUAL_PORT=1234 while port 80 is also exposed" {
+@test "[$TEST_FILE] VIRTUAL_PORT=90 while port 80 is also exposed" {
 	# GIVEN a container exposing 2 webservers on ports 80 and 1234
-	docker_clean bats-multiple-ports-2
 	run docker run -d \
-		--name bats-multiple-ports-2 \
-		-e VIRTUAL_HOST=multiple-ports-2.bats \
-		-e VIRTUAL_PORT=1234 \
-		--expose 1234 \
+		--name bats-web \
+		-e VIRTUAL_HOST=web.bats \
+		-e VIRTUAL_PORT=90 \
 		--expose 80 \
-		-v $BATS_TEST_DIRNAME/fixtures/multiple-ports/1.txt:/data80/data \
-		-v $BATS_TEST_DIRNAME/fixtures/multiple-ports/2.txt/:/data1234/data \
-		python:3 \
-			sh -c "(cd /data80/; python -m http.server 80 &); cd /data1234/; python -m http.server 1234"
+		--expose 90 \
+		-w /var/www/ \
+		python:3 sh -c "
+			(mkdir /var/www/80; cd /var/www/80; echo 'f00' > data; python -m http.server 80 & )
+			 mkdir /var/www/90; cd /var/www/90; echo 'bar' > data; python -m http.server 90
+		"
 	assert_success
-	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-multiple-ports-2):80/data
-	assert_output multiple-ports-1
-	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-multiple-ports-2):1234/data
-	assert_output multiple-ports-2
+
+	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-web):80/data
+	assert_output f00
+
+	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-web):90/data
+	assert_output bar
 
 	# THEN
-	run nginxproxy_curl /data --header "Host: multiple-ports-2.bats"
-	assert_output multiple-ports-2
+	run nginxproxy_curl /data --header "Host: web.bats"
+	assert_output bar
 }
 
 
 @test "[$TEST_FILE] a single exposed port != 80" {
 	# GIVEN a container exposing 1 webserver on ports 1234
-	docker_clean bats-multiple-ports-3
 	run docker run -d \
-		--name bats-multiple-ports-3 \
-		-e VIRTUAL_HOST=multiple-ports-3.bats \
+		--name bats-web \
+		-e VIRTUAL_HOST=web.bats \
 		--expose 1234 \
-		-v $BATS_TEST_DIRNAME/fixtures/multiple-ports/1.txt:/data1234/data \
-		-w /data1234/ \
-		python:3 python -m http.server 1234
+		-w /var/www/ \
+		python:3 sh -c "echo f00 > data; python -m http.server 1234"
 	assert_success
-	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-multiple-ports-3):1234/data
-	assert_output multiple-ports-1
+
+	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-web):1234/data
+	assert_output f00
 
 	# THEN
-	run nginxproxy_curl /data --header "Host: multiple-ports-3.bats"
-	assert_output multiple-ports-1
+	run nginxproxy_curl /data --header "Host: web.bats"
+	assert_output f00
 }
 
