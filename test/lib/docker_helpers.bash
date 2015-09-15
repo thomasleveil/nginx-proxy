@@ -2,9 +2,9 @@
 # Removes container $1
 function docker_clean {
 	docker kill $1 &>/dev/null ||:
-	sleep .5s
+	sleep .1s
 	docker rm -f $1 &>/dev/null ||:
-	sleep .5s
+	sleep .1s
 }
 
 # print the docker host port which is mapped to a container port
