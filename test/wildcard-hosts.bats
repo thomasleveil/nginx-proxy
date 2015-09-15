@@ -23,7 +23,7 @@ function teardown {
 		-w /data \
 		python:3 python -m http.server 80
 	assert_success
-	run retry 5 .5s curl --silent --fail --head http://$(docker_ip bats-wildcard-hosts-1):80/
+	run retry 5 1s curl --silent --fail --head http://$(docker_ip bats-wildcard-hosts-1):80/
 	assert_output -l 0 $'HTTP/1.0 200 OK\r'
 
 	# THEN
@@ -45,7 +45,7 @@ function teardown {
 		-w /data \
 		python:3 python -m http.server 80
 	assert_success
-	run retry 5 .5s curl --silent --fail --head http://$(docker_ip bats-wildcard-hosts-2):80/
+	run retry 5 1s curl --silent --fail --head http://$(docker_ip bats-wildcard-hosts-2)/
 	assert_output -l 0 $'HTTP/1.0 200 OK\r'
 
 	# THEN
@@ -67,7 +67,7 @@ function teardown {
 		-w /data \
 		python:3 python -m http.server 80
 	assert_success
-	run retry 5 .5s curl --silent --fail --head http://$(docker_ip bats-wildcard-hosts-3):80/
+	run retry 5 1s curl --silent --fail --head http://$(docker_ip bats-wildcard-hosts-3)/
 	assert_output -l 0 $'HTTP/1.0 200 OK\r'
 
 	# THEN

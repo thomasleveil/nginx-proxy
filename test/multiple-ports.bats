@@ -28,10 +28,10 @@ function teardown {
 	    "
 	assert_success
 
-	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-web):80/data
+	run retry 5 1s curl --silent --fail http://$(docker_ip bats-web):80/data
 	assert_output f00
 
-	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-web):90/data
+	run retry 5 1s curl --silent --fail http://$(docker_ip bats-web):90/data
 	assert_output bar
 
 	# THEN
@@ -55,10 +55,10 @@ function teardown {
 		"
 	assert_success
 
-	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-web):80/data
+	run retry 5 1s curl --silent --fail http://$(docker_ip bats-web):80/data
 	assert_output f00
 
-	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-web):90/data
+	run retry 5 1s curl --silent --fail http://$(docker_ip bats-web):90/data
 	assert_output bar
 
 	# THEN
@@ -77,7 +77,7 @@ function teardown {
 		python:3 sh -c "echo f00 > data; python -m http.server 1234"
 	assert_success
 
-	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-web):1234/data
+	run retry 5 1s curl --silent --fail http://$(docker_ip bats-web):1234/data
 	assert_output f00
 
 	# THEN
