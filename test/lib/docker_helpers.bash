@@ -7,13 +7,6 @@ function docker_clean {
 	sleep .1s
 }
 
-# print the docker host port which is mapped to a container port
-# $1 container name
-# $2 container port
-function docker_port {
-	docker port $1 $2 | cut -d: -f2
-}
-
 # get the ip of docker container $1
 function docker_ip {
 	docker inspect --format '{{ .NetworkSettings.IPAddress }}' $1
@@ -60,8 +53,7 @@ function docker_tcp {
 	docker run -d \
 		--name $container_name \
 		--expose 2375 \
-		-p 2375 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		rancher/socat-docker
-	docker -H tcp://localhost:$(docker_port $container_name 2375) version
+	docker -H tcp://$(docker_ip $container_name):2375 version
 }
