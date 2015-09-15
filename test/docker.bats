@@ -74,6 +74,8 @@ function teardown {
 		-v /etc/nginx/certs/ \
 		nginx:latest
 	assert_success
+	run retry 5 1s curl --silent --fail --head http://$(docker_ip bats-nginx)/
+	assert_output -l 0 $'HTTP/1.1 200 OK\r'
 
 	# GIVEN docker-gen running on our docker host
 	docker_clean bats-docker-gen
@@ -91,6 +93,10 @@ function teardown {
 	assert_success
 	run docker_wait_for_log 6 bats-docker-gen "Watching docker events"
 	assert_success
+
+	# Give some time to the docker-gen container to notify bats-nginx so it 
+	# reloads its config
+	sleep 2s
 
 	# THEN querying nginx without Host header → 503
 	run curl --silent --head http://$(docker_ip bats-nginx)/
