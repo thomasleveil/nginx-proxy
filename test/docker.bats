@@ -100,7 +100,12 @@ function teardown {
 
 	# THEN querying nginx without Host header → 503
 	run curl --silent --head http://$(docker_ip bats-nginx)/
-	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r'
+	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r' || sh -c "
+		docker logs bats-nginx
+		echo ----------------------
+		docker logs bats-docker-gen
+		false
+	"
 
 	# THEN querying nginx with Host header → 200
 	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web1.bats"
