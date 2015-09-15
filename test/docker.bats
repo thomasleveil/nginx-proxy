@@ -116,22 +116,16 @@ function start_web_container {
 	local -r CONTAINER=bats-web${ID}
 	local -r HOST=web${ID}.bats
 
-	local FIXTURE_DIR=$BATS_TEST_DIRNAME/fixtures/webservers/${ID}/
-	if ! [ -d "/./$FIXTURE_DIR" ]; then
-		echo "ERROR: fixture dir is missing: $FIXTURE_DIR"
-		false
-		return
-	fi
-
 	docker_clean $CONTAINER
 	run docker run -d \
 		--name $CONTAINER \
 		-e VIRTUAL_HOST=$HOST \
 		--expose 8000 \
-		-v $FIXTURE_DIR/:/var/www/ \
 		-w /var/www \
-		python:3 \
-		python -m http.server
+		python:3 sh -c "
+			echo 'web${ID}' > data
+			python -m http.server
+		"
 	assert_success
 	# Test that the container behaves
 	run retry 20 .5s curl --silent --fail http://$(docker_ip $CONTAINER):8000/data
