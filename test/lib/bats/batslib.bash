@@ -194,7 +194,6 @@ assert_output() {
         [[ ${lines[$idx]} =~ $expected ]] && return 0
       done
       { local -ar single=(
-          'command' "$cmd"
           'regex'   "$expected"
         )
         local -ar may_be_multi=(
@@ -212,7 +211,6 @@ assert_output() {
         [[ ${lines[$idx]} == *"$expected"* ]] && return 0
       done
       { local -ar single=(
-          'command'   "$cmd"
           'substring' "$expected"
         )
         local -ar may_be_multi=(
@@ -230,7 +228,6 @@ assert_output() {
         [[ ${lines[$idx]} == "$expected" ]] && return 0
       done
       { local -ar single=(
-          'command' "$cmd"
           'line'    "$expected"
         )
         local -ar may_be_multi=(
@@ -248,7 +245,6 @@ assert_output() {
     if (( is_mode_regex )); then
       if ! [[ ${lines[$idx]} =~ $expected ]]; then
         batslib_print_kv_single 5 \
-            'command' "$cmd" \
             'index'   "$idx" \
             'regex'   "$expected" \
             'line'    "${lines[$idx]}" \
@@ -258,7 +254,6 @@ assert_output() {
     elif (( is_mode_partial )); then
       if [[ ${lines[$idx]} != *"$expected"* ]]; then
         batslib_print_kv_single 9 \
-            'command'   "$cmd" \
             'index'     "$idx" \
             'substring' "$expected" \
             'line'      "${lines[$idx]}" \
@@ -268,7 +263,6 @@ assert_output() {
     else
       if [[ ${lines[$idx]} != "$expected" ]]; then
         batslib_print_kv_single 8 \
-            'command'  "$cmd" \
             'index'    "$idx" \
             'expected' "$expected" \
             'actual'   "${lines[$idx]}" \
@@ -281,7 +275,6 @@ assert_output() {
     if (( is_mode_regex )); then
       if ! [[ $output =~ $expected ]]; then
         batslib_print_kv_single_or_multi 6 \
-            'command' "$cmd" \
             'regex'   "$expected" \
             'output'  "$output" \
           | batslib_decorate 'regular expression does not match output' \
@@ -290,7 +283,6 @@ assert_output() {
     elif (( is_mode_partial )); then
       if [[ $output != *"$expected"* ]]; then
         batslib_print_kv_single_or_multi 9 \
-            'command'   "$cmd" \
             'substring' "$expected" \
             'output'    "$output" \
           | batslib_decorate 'output does not contain substring' \
@@ -299,7 +291,6 @@ assert_output() {
     else
       if [[ $output != "$expected" ]]; then
         batslib_print_kv_single_or_multi 8 \
-            'command'  "$cmd" \
             'expected' "$expected" \
             'actual'   "$output" \
           | batslib_decorate 'output differs' \
