@@ -3,8 +3,10 @@ load test_helpers
 
 
 function setup {
-	start_web_container 1 >&2
-	start_web_container 2 >&2
+	# GIVEN nginx-proxy
+	run nginxproxy -v /var/run/docker.sock:/tmp/docker.sock:ro
+	assert_success
+	nginxproxy_wait_for_log 3 "Watching docker events"
 }
 
 function teardown {
@@ -30,19 +32,7 @@ function teardown {
 	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-multiple-ports-1):1234/data
 	assert_output multiple-ports-2
 
-	# GIVEN nginx-proxy
-	run nginxproxy -v /var/run/docker.sock:/tmp/docker.sock:ro
-	assert_success
-	nginxproxy_wait_for_log 3 "Watching docker events"
-
-	# THEN querying the proxy without Host header → 503
-	run nginxproxy_curl / --head
-	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r'
-
-	# THEN querying the proxy with Host header → 200
-	assert_web_through_nginxproxy 1
-	assert_web_through_nginxproxy 2
-
+	# THEN
 	run nginxproxy_curl /data --header "Host: multiple-ports-1.bats"
 	assert_output multiple-ports-1
 }
@@ -67,19 +57,7 @@ function teardown {
 	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-multiple-ports-2):1234/data
 	assert_output multiple-ports-2
 
-	# GIVEN nginx-proxy
-	run nginxproxy -v /var/run/docker.sock:/tmp/docker.sock:ro
-	assert_success
-	nginxproxy_wait_for_log 3 "Watching docker events"
-
-	# THEN querying the proxy without Host header → 503
-	run nginxproxy_curl / --head
-	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r'
-
-	# THEN querying the proxy with Host header → 200
-	assert_web_through_nginxproxy 1
-	assert_web_through_nginxproxy 2
-
+	# THEN
 	run nginxproxy_curl /data --header "Host: multiple-ports-2.bats"
 	assert_output multiple-ports-2
 }
@@ -99,19 +77,7 @@ function teardown {
 	run retry 5 .5s curl --silent --fail http://$(docker_ip bats-multiple-ports-3):1234/data
 	assert_output multiple-ports-1
 
-	# GIVEN nginx-proxy
-	run nginxproxy -v /var/run/docker.sock:/tmp/docker.sock:ro
-	assert_success
-	nginxproxy_wait_for_log 3 "Watching docker events"
-
-	# THEN querying the proxy without Host header → 503
-	run nginxproxy_curl / --head
-	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r'
-
-	# THEN querying the proxy with Host header → 200
-	assert_web_through_nginxproxy 1
-	assert_web_through_nginxproxy 2
-
+	# THEN
 	run nginxproxy_curl /data --header "Host: multiple-ports-3.bats"
 	assert_output multiple-ports-1
 }

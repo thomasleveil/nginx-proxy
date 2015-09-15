@@ -14,17 +14,6 @@ function docker_port {
 	docker port $1 $2 | cut -d: -f2
 }
 
-# get the docker host ip
-function docker_host_ip {
-	local ip
-    if [ -z $DOCKER_HOST] || [[ $DOCKER_HOST == unix://* ]]; then
-        ip=127.0.0.1
-    else
-        ip=$(echo $DOCKER_HOST | sed -e 's|tcp://\(.*\):[0-9]*|\1|')
-    fi
-    echo $ip
-}
-
 # get the ip of docker container $1
 function docker_ip {
 	docker inspect --format '{{ .NetworkSettings.IPAddress }}' $1

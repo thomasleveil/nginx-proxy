@@ -6,7 +6,6 @@ function nginxproxy {
     clean_nginxproxy_container \
     && docker run -d \
         --name $SUT_CONTAINER \
-        -p 80 \
         "$@" \
         $SUT_IMAGE \
     && wait_for_nginxproxy_container_to_start \
@@ -36,7 +35,7 @@ function nginxproxy_curl {
         --connect-timeout 5 \
         --max-time 20 \
         "$@" \
-        $(get_SUT_url)$path
+        http://$(docker_ip $SUT_CONTAINER)$path
 }
 
 function clean_nginxproxy_container {

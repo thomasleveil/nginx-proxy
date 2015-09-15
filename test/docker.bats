@@ -71,7 +71,6 @@ function teardown {
 		--name bats-nginx \
 		-v /etc/nginx/conf.d/ \
 		-v /etc/nginx/certs/ \
-		-p 80 \
 		nginx:latest
 	assert_success
 
@@ -93,16 +92,59 @@ function teardown {
 	assert_success
 
 	# THEN querying nginx without Host header → 503
-	run curl --silent --head http://$(docker_host_ip):$(docker_port bats-nginx 80)/
+	run curl --silent --head http://$(docker_ip bats-nginx)/
 	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r'
 
 	# THEN querying nginx with Host header → 200
-	run curl --silent http://$(docker_host_ip):$(docker_port bats-nginx 80)/data --header "Host: web1.bats"
+	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web1.bats"
 	assert_success
 	assert_output web1
 	
-	run curl --silent http://$(docker_host_ip):$(docker_port bats-nginx 80)/data --header "Host: web2.bats"
+	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web2.bats"
 	assert_success
 	assert_output web2
 }
 
+
+# start a container named 'bats-web$1' running a webserver listening
+# on port 8000 and having the environment variable VIRTUAL_HOST set 
+# to `web$1.bats`.
+# When a HTTP request is made on path /data, it responds with the 
+# content of the file in `fixtures/webservers/$1/data`
+function start_web_container {
+	local -ir ID=$1
+	local -r CONTAINER=bats-web${ID}
+	local -r HOST=web${ID}.bats
+
+	local FIXTURE_DIR=$BATS_TEST_DIRNAME/fixtures/webservers/${ID}/
+	if ! [ -d "/./$FIXTURE_DIR" ]; then
+		echo "ERROR: fixture dir is missing: $FIXTURE_DIR"
+		false
+		return
+	fi
+
+	docker_clean $CONTAINER
+	run docker run -d \
+		--name $CONTAINER \
+		-e VIRTUAL_HOST=$HOST \
+		--expose 8000 \
+		-v $FIXTURE_DIR/:/var/www/ \
+		-w /var/www \
+		python:3 \
+		python -m http.server
+	assert_success
+	# Test that the container behaves
+	run retry 20 .5s curl --silent --fail http://$(docker_ip $CONTAINER):8000/data
+	assert_output web${ID}
+}
+
+
+function assert_web_through_nginxproxy {
+	local -ir web_id=$1
+	# WHEN
+	run nginxproxy_curl /data --header "Host: web${web_id}.bats"
+
+	# THEN
+	assert_success
+	assert_output web${web_id}
+}
