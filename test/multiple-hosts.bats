@@ -23,9 +23,9 @@ function teardown {
 		python:3 python -m http.server 80
 	assert_success
 	run retry 5 .5s curl --silent --fail \
-        --connect-timeout 5 \
-        --max-time 20 \
-        --head http://$(docker_ip bats-multiple-hosts-1):80/
+		--connect-timeout 5 \
+		--max-time 20 \
+		--head http://$(docker_ip bats-multiple-hosts-1):80/
 	assert_output -l 0 $'HTTP/1.0 200 OK\r'
 
 	# THEN

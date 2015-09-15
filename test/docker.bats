@@ -78,15 +78,15 @@ function teardown {
 	docker_clean bats-docker-gen
 	run docker run -d \
 		--name bats-docker-gen \
-	    -v /var/run/docker.sock:/tmp/docker.sock:ro \
-	    -v $BATS_TEST_DIRNAME/../nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro \
+		-v /var/run/docker.sock:/tmp/docker.sock:ro \
+		-v $BATS_TEST_DIRNAME/../nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro \
 		--volumes-from bats-nginx \
-	    jwilder/docker-gen:latest \
-	    	-notify-sighup bats-nginx \
-	    	-watch \
-	    	-only-exposed \
-	    	/etc/docker-gen/templates/nginx.tmpl \
-	    	/etc/nginx/conf.d/default.conf
+		jwilder/docker-gen:latest \
+			-notify-sighup bats-nginx \
+			-watch \
+			-only-exposed \
+			/etc/docker-gen/templates/nginx.tmpl \
+			/etc/nginx/conf.d/default.conf
 	assert_success
 	run docker_wait_for_log 6 bats-docker-gen "Watching docker events"
 	assert_success

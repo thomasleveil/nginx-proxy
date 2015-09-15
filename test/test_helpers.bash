@@ -1,6 +1,6 @@
 (
-    type docker &>/dev/null || ( echo "docker is not available"; exit 1 )
-    type curl &>/dev/null || ( echo "curl is not available"; exit 1 )
+	type docker &>/dev/null || ( echo "docker is not available"; exit 1 )
+	type curl &>/dev/null || ( echo "curl is not available"; exit 1 )
 )>&2
 
 SUT_IMAGE=jwilder/nginx-proxy:bats
