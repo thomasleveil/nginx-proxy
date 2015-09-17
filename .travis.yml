@@ -9,6 +9,7 @@ before_install:
   - docker pull nginx
   - docker pull python:3
   - docker pull jwilder/docker-gen
+  - docker pull rancher/socat-docker
 
 script:
   - docker build -t jwilder/nginx-proxy:bats .

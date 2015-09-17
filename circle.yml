@@ -9,6 +9,7 @@ dependencies:
     - docker pull jwilder/docker-gen
     - docker pull nginx
     - docker pull python:3
+    - docker pull rancher/socat-docker
 test:
   override:
     - docker build -t jwilder/nginx-proxy:bats .
