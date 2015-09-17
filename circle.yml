@@ -10,7 +10,9 @@ dependencies:
     - docker pull nginx
     - docker pull python:3
     - docker pull rancher/socat-docker
+    - docker pull jwilder/nginx-proxy:latest
 test:
   override:
-    - docker build -t jwilder/nginx-proxy:bats .
+    #- docker build -t jwilder/nginx-proxy:bats .
+    - docker tag jwilder/nginx-proxy:latest jwilder/nginx-proxy:bats
     - bats test
