@@ -98,6 +98,15 @@ function teardown {
 	# reloads its config
 	sleep 2s
 
+	# THEN querying nginx with Host header → 200
+	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web1.bats"
+	assert_success
+	assert_output web1
+	
+	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web2.bats"
+	assert_success
+	assert_output web2
+
 	# THEN querying nginx without Host header → 503
 	run curl --silent --head -A "after-docker-gen" http://$(docker_ip bats-nginx)/
 	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r' || sh -c "
@@ -113,15 +122,6 @@ function teardown {
 		docker logs bats-web2
 		false
 	"
-
-	# THEN querying nginx with Host header → 200
-	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web1.bats"
-	assert_success
-	assert_output web1
-	
-	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web2.bats"
-	assert_success
-	assert_output web2
 }
 
 
