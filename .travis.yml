@@ -6,6 +6,7 @@ before_install:
   - sudo add-apt-repository ppa:duggan/bats --yes
   - sudo apt-get update -qq
   - sudo apt-get install -qq bats
+  - sudo service docker restart ; sleep 10
   - docker pull nginx
   - docker pull python:3
   - docker pull jwilder/docker-gen
