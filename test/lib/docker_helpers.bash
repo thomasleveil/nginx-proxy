@@ -2,9 +2,9 @@
 # Removes container $1
 function docker_clean {
 	docker kill $1 &>/dev/null ||:
-	sleep .1s
-	docker rm -f $1 &>/dev/null ||:
-	sleep .1s
+	sleep 1s
+	docker rm -vf $1 &>/dev/null ||:
+	sleep 1s
 }
 
 # get the ip of docker container $1
@@ -33,13 +33,13 @@ function docker_assert_log {
 }
 
 # wait for container $2 to contain a given text in its log
-# $1 timeout in second
-# $2 container
+# $1 container
+# $2 timeout in second
 # $* text to wait for
 function docker_wait_for_log {
-	local -ir timeout_sec=$1
-	shift
 	local -r container=$1
+	shift
+	local -ir timeout_sec=$1
 	shift
 	retry $(( $timeout_sec * 2 )) .5s docker_assert_log $container "$*"
 }

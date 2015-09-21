@@ -1,11 +1,12 @@
 #!/usr/bin/env bats
 load test_helpers
+SUT_CONTAINER=bats-nginx-proxy-${TEST_FILE}-1
 
 
 @test "[$TEST_FILE] start a nginx-proxy container" {
-	run nginxproxy -v /var/run/docker.sock:/tmp/docker.sock:ro
+	run nginxproxy $SUT_CONTAINER -v /var/run/docker.sock:/tmp/docker.sock:ro
 	assert_success
-	nginxproxy_wait_for_log 3 "Watching docker events"
+	docker_wait_for_log $SUT_CONTAINER 3 "Watching docker events"
 }
 
 
@@ -23,11 +24,11 @@ load test_helpers
 	assert_output -l 0 $'HTTP/1.0 200 OK\r'
 
 	# THEN
-	run nginxproxy_curl / --head --header "Host: f00.wildcard.bats"
+	run curl_container $SUT_CONTAINER / --head --header "Host: f00.wildcard.bats"
 	assert_output -l 0 $'HTTP/1.1 200 OK\r'
 
 	# THEN
-	run nginxproxy_curl / --head --header "Host: bar.wildcard.bats"
+	run curl_container $SUT_CONTAINER / --head --header "Host: bar.wildcard.bats"
 	assert_output -l 0 $'HTTP/1.1 200 OK\r'
 }
 
@@ -45,11 +46,11 @@ load test_helpers
 	assert_output -l 0 $'HTTP/1.0 200 OK\r'
 
 	# THEN
-	run nginxproxy_curl / --head --header "Host: wildcard.bats.f00"
+	run curl_container $SUT_CONTAINER / --head --header "Host: wildcard.bats.f00"
 	assert_output -l 0 $'HTTP/1.1 200 OK\r'
 
 	# THEN
-	run nginxproxy_curl / --head --header "Host: wildcard.bats.bar"
+	run curl_container $SUT_CONTAINER / --head --header "Host: wildcard.bats.bar"
 	assert_output -l 0 $'HTTP/1.1 200 OK\r'
 }
 
@@ -67,10 +68,10 @@ load test_helpers
 	assert_output -l 0 $'HTTP/1.0 200 OK\r'
 
 	# THEN
-	run nginxproxy_curl / --head --header "Host: foo.bar.whatever.bats"
+	run curl_container $SUT_CONTAINER / --head --header "Host: foo.bar.whatever.bats"
 	assert_output -l 0 $'HTTP/1.1 200 OK\r'
 
 	# THEN
-	run nginxproxy_curl / --head --header "Host: foo.bar.why.not.bats"
+	run curl_container $SUT_CONTAINER / --head --header "Host: foo.bar.why.not.bats"
 	assert_output -l 0 $'HTTP/1.1 200 OK\r'
 }

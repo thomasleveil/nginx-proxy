@@ -1,10 +1,11 @@
 #!/usr/bin/env bats
 load test_helpers
+SUT_CONTAINER=bats-nginx-proxy-${TEST_FILE}-1
 
 @test "[$TEST_FILE] start a nginx-proxy container" {
-	run nginxproxy -v /var/run/docker.sock:/tmp/docker.sock:ro
+	run nginxproxy $SUT_CONTAINER -v /var/run/docker.sock:/tmp/docker.sock:ro
 	assert_success
-	nginxproxy_wait_for_log 3 "Watching docker events"
+	docker_wait_for_log $SUT_CONTAINER 3 "Watching docker events"
 }
 
 @test "[$TEST_FILE] nginx-proxy forwards requests for 2 hosts" {
@@ -17,17 +18,14 @@ load test_helpers
 		-w /data \
 		python:3 python -m http.server 80
 	assert_success
-	run retry 5 1s curl --silent --fail \
-		--connect-timeout 5 \
-		--max-time 20 \
-		--head http://$(docker_ip bats-multiple-hosts-1):80/
+	run retry 5 1s curl_container bats-multiple-hosts-1 / --head
 	assert_output -l 0 $'HTTP/1.0 200 OK\r'
 
 	# THEN
-	run nginxproxy_curl / --head --header "Host: multiple-hosts-1-A.bats"
-	assert_output -l 0 $'HTTP/1.1 200 OK\r' || (echo $output; false)
+	run curl_container $SUT_CONTAINER / --head --header 'Host: multiple-hosts-1-A.bats'
+	assert_output -l 0 $'HTTP/1.1 200 OK\r' || (echo $output; echo $status; false)
 
 	# THEN
-	run nginxproxy_curl / --head --header "Host: multiple-hosts-1-B.bats"
+	run curl_container $SUT_CONTAINER / --head --header 'Host: multiple-hosts-1-B.bats'
 	assert_output -l 0 $'HTTP/1.1 200 OK\r'
 }

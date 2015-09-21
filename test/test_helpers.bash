@@ -4,7 +4,6 @@
 )>&2
 
 SUT_IMAGE=jwilder/nginx-proxy:bats
-SUT_CONTAINER=bats-nginx-proxy-$(basename $BATS_TEST_FILENAME .bats)
 TEST_FILE=$(basename $BATS_TEST_FILENAME .bats)
 
 # load the future Bats stdlib
@@ -16,3 +15,20 @@ load "${BATS_LIB}/batslib.bash"
 load ${DIR}/lib/helpers.bash
 load ${DIR}/lib/docker_helpers.bash
 load ${DIR}/lib/nginx_helpers.bash
+
+# Send a HTTP request to the SUT container $1 for path $2 and 
+# Additional curl options can be passed as $@
+#
+# $1 container name
+# $2 HTTP path to query
+# $@ additional options to pass to the curl command
+function curl_container {
+	local -r container=$1
+	local -r path=$2
+	shift 2
+	curl --silent \
+		--connect-timeout 5 \
+		--max-time 20 \
+		"$@" \
+		http://$(docker_ip $container)${path}
+}

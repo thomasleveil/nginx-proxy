@@ -9,38 +9,41 @@ load test_helpers
 
 
 @test "[$TEST_FILE] -v /var/run/docker.sock:/tmp/docker.sock:ro" {
+	SUT_CONTAINER=bats-nginx-proxy-${TEST_FILE}-1
 	# GIVEN nginx-proxy running on our docker host using the default unix socket 
-	run nginxproxy -v /var/run/docker.sock:/tmp/docker.sock:ro
+	run nginxproxy $SUT_CONTAINER -v /var/run/docker.sock:/tmp/docker.sock:ro
 	assert_success
-	nginxproxy_wait_for_log 3 "Watching docker events"
+	docker_wait_for_log $SUT_CONTAINER 3 "Watching docker events"
 
 	# THEN querying the proxy without Host header → 503
-	run nginxproxy_curl / --head
+	run curl_container $SUT_CONTAINER / --head
 	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r'
 
 	# THEN querying the proxy with Host header → 200
-	assert_web_through_nginxproxy 1
-	assert_web_through_nginxproxy 2
+	assert_web_through_nginxproxy $SUT_CONTAINER 1
+	assert_web_through_nginxproxy $SUT_CONTAINER 2
 }
 
 
 @test "[$TEST_FILE] -v /var/run/docker.sock:/f00.sock:ro -e DOCKER_HOST=unix:///f00.sock" {
+	SUT_CONTAINER=bats-nginx-proxy-${TEST_FILE}-2
 	# GIVEN nginx-proxy running on our docker host using a custom unix socket 
-	run nginxproxy -v /var/run/docker.sock:/f00.sock:ro -e DOCKER_HOST=unix:///f00.sock
+	run nginxproxy $SUT_CONTAINER -v /var/run/docker.sock:/f00.sock:ro -e DOCKER_HOST=unix:///f00.sock
 	assert_success
-	nginxproxy_wait_for_log 3 "Watching docker events"
+	docker_wait_for_log $SUT_CONTAINER 3 "Watching docker events"
 
 	# THEN querying the proxy without Host header → 503
-	run nginxproxy_curl / --head
+	run curl_container $SUT_CONTAINER / --head
 	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r'
 
 	# THEN querying the proxy with Host header → 200
-	assert_web_through_nginxproxy 1
-	assert_web_through_nginxproxy 2
+	assert_web_through_nginxproxy $SUT_CONTAINER 1
+	assert_web_through_nginxproxy $SUT_CONTAINER 2
 }
 
 
 @test "[$TEST_FILE] -e DOCKER_HOST=tcp://..." {
+	SUT_CONTAINER=bats-nginx-proxy-${TEST_FILE}-3
 	# GIVEN a container exposing our docker host over TCP
 	docker_clean bats-docker-tcp
 	run docker_tcp bats-docker-tcp
@@ -48,17 +51,17 @@ load test_helpers
 	sleep 1s
 
 	# GIVEN nginx-proxy running on our docker host using tcp to connect to our docker host
-	run nginxproxy -e DOCKER_HOST="tcp://bats-docker-tcp:2375" --link bats-docker-tcp:bats-docker-tcp
+	run nginxproxy $SUT_CONTAINER -e DOCKER_HOST="tcp://bats-docker-tcp:2375" --link bats-docker-tcp:bats-docker-tcp
 	assert_success
-	nginxproxy_wait_for_log 3 "Watching docker events"
+	docker_wait_for_log $SUT_CONTAINER 3 "Watching docker events"
 
 	# THEN querying the proxy without Host header → 503
-	run nginxproxy_curl / --head
+	run curl_container $SUT_CONTAINER / --head
 	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r'
 
 	# THEN querying the proxy with Host header → 200
-	assert_web_through_nginxproxy 1
-	assert_web_through_nginxproxy 2
+	assert_web_through_nginxproxy $SUT_CONTAINER 1
+	assert_web_through_nginxproxy $SUT_CONTAINER 2
 }
 
 
@@ -88,7 +91,7 @@ load test_helpers
 			/etc/docker-gen/templates/nginx.tmpl \
 			/etc/nginx/conf.d/default.conf
 	assert_success
-	run docker_wait_for_log 6 bats-docker-gen "Watching docker events"
+	run docker_wait_for_log bats-docker-gen 6 "Watching docker events"
 	assert_success
 
 	# Give some time to the docker-gen container to notify bats-nginx so it 
@@ -101,7 +104,10 @@ load test_helpers
 		set -x
 		echo $output
 		echo ------------------------------------------
+		docker ps -a
+		echo ------------------------------------------
 		docker logs bats-nginx
+		docker logs bats-docker-gen
 		false
 	"
 	assert_output web1
@@ -154,11 +160,13 @@ function start_web_container {
 	assert_output web${ID}
 }
 
-
+# $1 container
+# $2 web container id
 function assert_web_through_nginxproxy {
-	local -ir web_id=$1
+	local -r container=$1
+	local -ir web_id=$2
 	# WHEN
-	run nginxproxy_curl /data --header "Host: web${web_id}.bats"
+	run curl_container $container /data --header "Host: web${web_id}.bats"
 
 	# THEN
 	assert_success
