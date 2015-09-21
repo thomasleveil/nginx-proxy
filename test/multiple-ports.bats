@@ -9,13 +9,10 @@ function setup {
 	nginxproxy_wait_for_log 3 "Watching docker events"
 }
 
-function teardown {
-	docker ps -aq | xargs -r docker rm -f &>/dev/null
-}
-
 
 @test "[$TEST_FILE] nginx-proxy default to the service running on port 80" {
 	# GIVEN a container exposing 2 webservers on ports 80 and 1234
+	docker_clean bats-web
 	run docker run -d \
 		--name bats-web \
 		-e VIRTUAL_HOST=web.bats \
@@ -42,6 +39,7 @@ function teardown {
 
 @test "[$TEST_FILE] VIRTUAL_PORT=90 while port 80 is also exposed" {
 	# GIVEN a container exposing 2 webservers on ports 80 and 1234
+	docker_clean bats-web
 	run docker run -d \
 		--name bats-web \
 		-e VIRTUAL_HOST=web.bats \
@@ -69,6 +67,7 @@ function teardown {
 
 @test "[$TEST_FILE] a single exposed port != 80" {
 	# GIVEN a container exposing 1 webserver on ports 1234
+	docker_clean bats-web
 	run docker run -d \
 		--name bats-web \
 		-e VIRTUAL_HOST=web.bats \

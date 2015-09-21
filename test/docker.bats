@@ -7,11 +7,6 @@ function setup {
 	start_web_container 2 >&2
 }
 
-function teardown {
-	docker ps -aq | xargs -r docker rm -fv &>/dev/null
-}
-
-
 @test "[$TEST_FILE] -v /var/run/docker.sock:/tmp/docker.sock:ro" {
 	# GIVEN nginx-proxy running on our docker host using the default unix socket 
 	run nginxproxy -v /var/run/docker.sock:/tmp/docker.sock:ro
@@ -46,6 +41,7 @@ function teardown {
 
 @test "[$TEST_FILE] -e DOCKER_HOST=tcp://..." {
 	# GIVEN a container exposing our docker host over TCP
+	docker_clean bats-docker-tcp
 	run docker_tcp bats-docker-tcp
 	assert_success
 	sleep 1s

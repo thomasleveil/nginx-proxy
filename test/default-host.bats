@@ -2,13 +2,9 @@
 load test_helpers
 
 
-function setup {
-	docker_clean bats-web
-}
-
-
 @test "[$TEST_FILE] DEFAULT_HOST=web1.bats" {
 	# GIVEN a webserver
+	docker_clean bats-web
 	run docker run -d \
 		--name bats-web \
 		-e VIRTUAL_HOST=web.bats \

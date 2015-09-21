@@ -7,11 +7,6 @@ function setup {
 	nginxproxy_wait_for_log 3 "Watching docker events"
 }
 
-function teardown {
-	docker ps -aq | xargs -r docker rm -f &>/dev/null
-}
-
-
 @test "[$TEST_FILE] nginx-proxy forwards requests for 2 hosts" {
 	# GIVEN a container running a web server
 	docker_clean bats-multiple-hosts-1

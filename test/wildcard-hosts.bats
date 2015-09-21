@@ -8,11 +8,6 @@ function setup {
 	nginxproxy_wait_for_log 3 "Watching docker events"
 }
 
-function teardown {
-	docker ps -aq | xargs -r docker rm -f &>/dev/null
-}
-
-
 @test "[$TEST_FILE] *.wildcard.bats" {
 	# GIVEN a container running a web server
 	docker_clean bats-wildcard-hosts-1
