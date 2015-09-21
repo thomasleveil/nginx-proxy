@@ -100,7 +100,13 @@ function teardown {
 
 	# THEN querying nginx with Host header → 200
 	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web1.bats"
-	assert_success
+	assert_success || sh -c "
+		set -x
+		echo $output
+		echo ------------------------------------------
+		docker logs bats-nginx
+		false
+	"
 	assert_output web1
 	
 	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web2.bats"
