@@ -9,6 +9,7 @@ load test_helpers
 
 
 @test "[$TEST_FILE] -v /var/run/docker.sock:/tmp/docker.sock:ro" {
+	skip
 	SUT_CONTAINER=bats-nginx-proxy-${TEST_FILE}-1
 	# GIVEN nginx-proxy running on our docker host using the default unix socket 
 	run nginxproxy $SUT_CONTAINER -v /var/run/docker.sock:/tmp/docker.sock:ro
@@ -26,6 +27,7 @@ load test_helpers
 
 
 @test "[$TEST_FILE] -v /var/run/docker.sock:/f00.sock:ro -e DOCKER_HOST=unix:///f00.sock" {
+	skip
 	SUT_CONTAINER=bats-nginx-proxy-${TEST_FILE}-2
 	# GIVEN nginx-proxy running on our docker host using a custom unix socket 
 	run nginxproxy $SUT_CONTAINER -v /var/run/docker.sock:/f00.sock:ro -e DOCKER_HOST=unix:///f00.sock
@@ -43,6 +45,7 @@ load test_helpers
 
 
 @test "[$TEST_FILE] -e DOCKER_HOST=tcp://..." {
+	skip
 	SUT_CONTAINER=bats-nginx-proxy-${TEST_FILE}-3
 	# GIVEN a container exposing our docker host over TCP
 	docker_clean bats-docker-tcp
@@ -66,8 +69,10 @@ load test_helpers
 
 
 @test "[$TEST_FILE] separated containers (nginx + docker-gen + nginx.tmpl)" {
-	# GIVEN a simple nginx container
 	docker_clean bats-nginx
+	docker_clean bats-docker-gen
+	
+	# GIVEN a simple nginx container
 	run docker run -d \
 		--name bats-nginx \
 		-v /etc/nginx/conf.d/ \
@@ -77,8 +82,10 @@ load test_helpers
 	run retry 5 1s curl --silent --fail -A "before-docker-gen" --head http://$(docker_ip bats-nginx)/
 	assert_output -l 0 $'HTTP/1.1 200 OK\r'
 
+	echo "before starting bats-docker-gen" >&2
+	docker ps -a >&2
+
 	# GIVEN docker-gen running on our docker host
-	docker_clean bats-docker-gen
 	run docker run -d \
 		--name bats-docker-gen \
 		-v /var/run/docker.sock:/tmp/docker.sock:ro \
@@ -98,39 +105,26 @@ load test_helpers
 	# reloads its config
 	sleep 2s
 
-	# THEN querying nginx with Host header → 200
-	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web1.bats"
-	assert_success || sh -c "
-		set -x
-		echo $output
-		echo ------------------------------------------
-		docker ps -a
-		echo ------------------------------------------
-		docker logs bats-nginx
+	echo "after starting bats-docker-gen" >&2
+	docker ps -a >&2
+	echo "bats-nginx should not be Exited"
+	run docker_running_state bats-nginx
+	assert_output "true" || {
 		docker logs bats-docker-gen
 		false
-	"
+	} >&2
+	
+
+	# THEN querying nginx with Host header → 200
+	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web1.bats"
 	assert_output web1
 	
 	run curl --silent http://$(docker_ip bats-nginx)/data --header "Host: web2.bats"
-	assert_success
 	assert_output web2
 
 	# THEN querying nginx without Host header → 503
 	run curl --silent --head -A "after-docker-gen" http://$(docker_ip bats-nginx)/
-	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r' || sh -c "
-		set +x
-		docker logs bats-nginx
-		echo ----------------------
-		docker logs bats-docker-gen
-		echo ----------------------
-		curl --silent http://$(docker_ip bats-nginx)/data
-		echo ----------------------
-		docker logs bats-web1
-		echo ----------------------
-		docker logs bats-web2
-		false
-	"
+	assert_output -l 0 $'HTTP/1.1 503 Service Temporarily Unavailable\r'
 }
 
 

@@ -15,4 +15,4 @@ test:
   override:
     #- docker build -t jwilder/nginx-proxy:bats .
     - docker tag jwilder/nginx-proxy:latest jwilder/nginx-proxy:bats
-    - bats test
+    - bats test/docker.bats
