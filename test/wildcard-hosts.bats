@@ -2,11 +2,12 @@
 load test_helpers
 
 
-function setup {	
+@test "[$TEST_FILE] start a nginx-proxy container" {
 	run nginxproxy -v /var/run/docker.sock:/tmp/docker.sock:ro
 	assert_success
 	nginxproxy_wait_for_log 3 "Watching docker events"
 }
+
 
 @test "[$TEST_FILE] *.wildcard.bats" {
 	# GIVEN a container running a web server

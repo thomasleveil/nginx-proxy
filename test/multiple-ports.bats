@@ -2,7 +2,7 @@
 load test_helpers
 
 
-function setup {
+@test "[$TEST_FILE] start a nginx-proxy container" {
 	# GIVEN nginx-proxy
 	run nginxproxy -v /var/run/docker.sock:/tmp/docker.sock:ro
 	assert_success
@@ -12,9 +12,9 @@ function setup {
 
 @test "[$TEST_FILE] nginx-proxy default to the service running on port 80" {
 	# GIVEN a container exposing 2 webservers on ports 80 and 1234
-	docker_clean bats-web
+	docker_clean bats-web-${TEST_FILE}-1
 	run docker run -d \
-		--name bats-web \
+		--name bats-web-${TEST_FILE}-1 \
 		-e VIRTUAL_HOST=web.bats \
 		--expose 80 \
 		--expose 90 \
@@ -39,9 +39,9 @@ function setup {
 
 @test "[$TEST_FILE] VIRTUAL_PORT=90 while port 80 is also exposed" {
 	# GIVEN a container exposing 2 webservers on ports 80 and 1234
-	docker_clean bats-web
+	docker_clean bats-web-${TEST_FILE}-2
 	run docker run -d \
-		--name bats-web \
+		--name bats-web-${TEST_FILE}-2 \
 		-e VIRTUAL_HOST=web.bats \
 		-e VIRTUAL_PORT=90 \
 		--expose 80 \
@@ -67,9 +67,9 @@ function setup {
 
 @test "[$TEST_FILE] a single exposed port != 80" {
 	# GIVEN a container exposing 1 webserver on ports 1234
-	docker_clean bats-web
+	docker_clean bats-web-${TEST_FILE}-3
 	run docker run -d \
-		--name bats-web \
+		--name bats-web-${TEST_FILE}-3 \
 		-e VIRTUAL_HOST=web.bats \
 		--expose 1234 \
 		-w /var/www/ \

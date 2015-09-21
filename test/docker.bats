@@ -2,10 +2,11 @@
 load test_helpers
 
 
-function setup {
+@test "[$TEST_FILE] start web containers" {
 	start_web_container 1 >&2
 	start_web_container 2 >&2
 }
+
 
 @test "[$TEST_FILE] -v /var/run/docker.sock:/tmp/docker.sock:ro" {
 	# GIVEN nginx-proxy running on our docker host using the default unix socket 
